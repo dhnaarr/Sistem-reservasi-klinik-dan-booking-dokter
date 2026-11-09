@@ -62,12 +62,12 @@ CREATE TABLE `dokter` (
 --
 
 INSERT INTO `dokter` (`id_dokter`, `id_poli`, `nama_dokter`, `spesialis`, `foto`) VALUES
-(1, 1, 'dr. Andi Prasetyo', 'Dokter Umum', NULL),
-(2, 2, 'dr. Sinta Wulandari, Sp.A', 'Spesialis Anak', NULL),
-(3, 2, 'dr. Bagas Mahendra, Sp.A', 'Spesialis Anak', NULL),
-(4, 3, 'dr. Rina Kusuma, Sp.PD', 'Spesialis Penyakit Dalam', NULL),
-(5, 4, 'drg. Maya Anggraini', 'Dokter Gigi', NULL),
-(6, 1, 'dr. Dewi Lestari', 'Dokter Umum', NULL);
+(1, 1, 'dr. Dhanar Rokhman Fredyanto', 'Dokter Umum', NULL),
+(2, 2, 'dr. Sakanti Maheswari R.C, Sp.A', 'Spesialis Anak', NULL),
+(3, 2, 'dr. Mahesa', 'Spesialis Anak', NULL),
+(4, 3, 'dr. Navvaro, Sp.PD', 'Spesialis Penyakit Dalam', NULL),
+(5, 4, 'drg. Anggraena', 'Dokter Gigi', NULL),
+(6, 1, 'dr. Yofi', 'Dokter Umum', NULL);
 
 -- --------------------------------------------------------
 
