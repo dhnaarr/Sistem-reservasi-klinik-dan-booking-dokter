@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-wajib_role('admin');
+require_role('admin');
 
 $total = [];
 foreach (['poli', 'dokter', 'jadwal_praktik', 'pasien', 'pendaftaran'] as $t) {
