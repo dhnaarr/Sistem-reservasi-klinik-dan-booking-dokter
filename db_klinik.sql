@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 08 Nov 2026 pada 07.38
+-- Waktu pembuatan: 17 Nov 2026 pada 15.49
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -52,6 +52,7 @@ INSERT INTO `asuransi` (`id_asuransi`, `nama_asuransi`) VALUES
 CREATE TABLE `dokter` (
   `id_dokter` int(11) NOT NULL,
   `id_poli` int(11) NOT NULL,
+  `id_user` int(11) DEFAULT NULL,
   `nama_dokter` varchar(100) NOT NULL,
   `spesialis` varchar(100) NOT NULL,
   `foto` varchar(255) DEFAULT NULL
@@ -61,13 +62,13 @@ CREATE TABLE `dokter` (
 -- Dumping data untuk tabel `dokter`
 --
 
-INSERT INTO `dokter` (`id_dokter`, `id_poli`, `nama_dokter`, `spesialis`, `foto`) VALUES
-(1, 1, 'dr. Dhanar Rokhman Fredyanto', 'Dokter Umum', NULL),
-(2, 2, 'dr. Sakanti Maheswari R.C, Sp.A', 'Spesialis Anak', NULL),
-(3, 2, 'dr. Mahesa', 'Spesialis Anak', NULL),
-(4, 3, 'dr. Navvaro, Sp.PD', 'Spesialis Penyakit Dalam', NULL),
-(5, 4, 'drg. Anggraena', 'Dokter Gigi', NULL),
-(6, 1, 'dr. Yofi', 'Dokter Umum', NULL);
+INSERT INTO `dokter` (`id_dokter`, `id_poli`, `id_user`, `nama_dokter`, `spesialis`, `foto`) VALUES
+(1, 1, NULL, 'dr. Andi Prasetyo', 'Dokter Umum', NULL),
+(2, 2, NULL, 'dr. Sinta Wulandari, Sp.A', 'Spesialis Anak', NULL),
+(3, 2, NULL, 'dr. Bagas Mahendra, Sp.A', 'Spesialis Anak', NULL),
+(4, 3, NULL, 'dr. Rina Kusuma, Sp.PD', 'Spesialis Penyakit Dalam', NULL),
+(5, 4, NULL, 'drg. Maya Anggraini', 'Dokter Gigi', NULL),
+(6, 1, NULL, 'dr. Dewi Lestari', 'Dokter Umum', NULL);
 
 -- --------------------------------------------------------
 
@@ -254,6 +255,23 @@ INSERT INTO `poli` (`id_poli`, `nama_poli`, `kode_poli`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Struktur dari tabel `rekam_medis`
+--
+
+CREATE TABLE `rekam_medis` (
+  `id_rekam` int(11) NOT NULL,
+  `id_pendaftaran` int(11) NOT NULL,
+  `id_dokter` int(11) NOT NULL,
+  `keluhan` text DEFAULT NULL,
+  `diagnosa` text DEFAULT NULL,
+  `tindakan` text DEFAULT NULL,
+  `resep` text DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Struktur dari tabel `users`
 --
 
@@ -262,7 +280,7 @@ CREATE TABLE `users` (
   `nama` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('admin','pasien') NOT NULL DEFAULT 'pasien',
+  `role` enum('admin','dokter','pasien') NOT NULL DEFAULT 'pasien',
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -281,6 +299,7 @@ ALTER TABLE `asuransi`
 --
 ALTER TABLE `dokter`
   ADD PRIMARY KEY (`id_dokter`),
+  ADD UNIQUE KEY `id_user` (`id_user`),
   ADD KEY `fk_dokter_poli` (`id_poli`);
 
 --
@@ -321,6 +340,14 @@ ALTER TABLE `pesan`
 ALTER TABLE `poli`
   ADD PRIMARY KEY (`id_poli`),
   ADD UNIQUE KEY `kode_poli` (`kode_poli`);
+
+--
+-- Indeks untuk tabel `rekam_medis`
+--
+ALTER TABLE `rekam_medis`
+  ADD PRIMARY KEY (`id_rekam`),
+  ADD UNIQUE KEY `id_pendaftaran` (`id_pendaftaran`),
+  ADD KEY `id_dokter` (`id_dokter`);
 
 --
 -- Indeks untuk tabel `users`
@@ -376,6 +403,12 @@ ALTER TABLE `poli`
   MODIFY `id_poli` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT untuk tabel `rekam_medis`
+--
+ALTER TABLE `rekam_medis`
+  MODIFY `id_rekam` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
@@ -389,7 +422,8 @@ ALTER TABLE `users`
 -- Ketidakleluasaan untuk tabel `dokter`
 --
 ALTER TABLE `dokter`
-  ADD CONSTRAINT `fk_dokter_poli` FOREIGN KEY (`id_poli`) REFERENCES `poli` (`id_poli`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_dokter_poli` FOREIGN KEY (`id_poli`) REFERENCES `poli` (`id_poli`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_dokter_user` FOREIGN KEY (`id_user`) REFERENCES `users` (`id_user`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Ketidakleluasaan untuk tabel `jadwal_praktik`
@@ -416,6 +450,13 @@ ALTER TABLE `pendaftaran`
 --
 ALTER TABLE `pesan`
   ADD CONSTRAINT `fk_pesan_user` FOREIGN KEY (`id_user`) REFERENCES `users` (`id_user`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `rekam_medis`
+--
+ALTER TABLE `rekam_medis`
+  ADD CONSTRAINT `rekam_medis_ibfk_1` FOREIGN KEY (`id_pendaftaran`) REFERENCES `pendaftaran` (`id_pendaftaran`) ON DELETE CASCADE,
+  ADD CONSTRAINT `rekam_medis_ibfk_2` FOREIGN KEY (`id_dokter`) REFERENCES `dokter` (`id_dokter`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
