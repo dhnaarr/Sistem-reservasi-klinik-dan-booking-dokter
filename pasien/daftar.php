@@ -61,3 +61,52 @@ $asuransi = db_semua('SELECT * FROM asuransi ORDER BY nama_asuransi');
 $judul = 'Konfirmasi Booking';
 require __DIR__ . '/../includes/header.php';
 ?>
+<main class="isi sempit">
+  <div class="judul-halaman">
+    <div><h1>Konfirmasi booking</h1>
+      <p class="redup">Langkah 3 dari 3 — <a href="<?= url('pasien/jadwal.php?dokter=' . $j['id_dokter']) ?>">‹ ganti tanggal</a></p></div>
+  </div>
+
+  <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
+
+  <div class="kartu">
+    <h3>Ringkasan</h3>
+    <dl class="rincian">
+      <dt>Poli</dt><dd><?= e($j['nama_poli']) ?></dd>
+      <dt>Dokter</dt><dd><?= e($j['nama_dokter']) ?> (<?= e($j['spesialis']) ?>)</dd>
+      <dt>Tanggal</dt><dd><?= e(tgl_indo($j['tanggal'])) ?></dd>
+      <dt>Jam</dt><dd><?= jam($j['jam_mulai']) ?> - <?= jam($j['jam_selesai']) ?> (sesi <?= e($j['sesi']) ?>)</dd>
+      <dt>Sisa kuota</dt><dd><?= $j['sisa'] ?> slot</dd>
+    </dl>
+  </div>
+
+  <form method="post" class="kartu" style="margin-top:1rem">
+    <input type="hidden" name="jadwal" value="<?= $id_jadwal ?>">
+    <h3>Penjamin</h3>
+    <label class="pilihan"><input type="radio" name="jenis_penjamin" value="umum" checked> Umum</label>
+    <label class="pilihan"><input type="radio" name="jenis_penjamin" value="asuransi"> Asuransi</label>
+    <label class="pilihan"><input type="radio" name="jenis_penjamin" value="bpjs"> BPJS (dilayani lewat Mobile JKN)</label>
+
+    <div id="kotak-asuransi" hidden>
+      <label>Pilih perusahaan asuransi</label>
+      <select name="id_asuransi">
+        <option value="0">-- Pilih --</option>
+        <?php foreach ($asuransi as $a): ?>
+          <option value="<?= $a['id_asuransi'] ?>"><?= e($a['nama_asuransi']) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+
+    <button class="tombol penuh" style="margin-top:1.2rem">Booking sekarang</button>
+  </form>
+</main>
+
+<script>
+
+var radios = document.querySelectorAll('input[name=jenis_penjamin]');
+var kotak = document.getElementById('kotak-asuransi');
+function cek() { kotak.hidden = document.querySelector('input[name=jenis_penjamin]:checked').value !== 'asuransi'; }
+radios.forEach(function (r) { r.addEventListener('change', cek); });
+cek();
+</script>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
