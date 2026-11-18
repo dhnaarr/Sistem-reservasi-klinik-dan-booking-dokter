@@ -34,3 +34,39 @@ $rows = db_semua('SELECT p.*, (SELECT COUNT(*) FROM dokter d WHERE d.id_poli = p
 $judul = 'Data Poli';
 require __DIR__ . '/../includes/header.php';
 ?>
+<main class="isi">
+  <div class="judul-halaman">
+    <div><h1>Poli</h1><p class="redup">Kode poli menjadi awalan nomor antrian (contoh: U-03).</p></div>
+  </div>
+
+  
+  <form method="post" class="kartu form-baris">
+    <input type="hidden" name="id" value="<?= $edit['id_poli'] ?? 0 ?>">
+    <div><label>Nama poli</label><input name="nama_poli" value="<?= e($edit['nama_poli'] ?? '') ?>" required maxlength="100"></div>
+    <div style="max-width:140px"><label>Kode (1 huruf)</label><input name="kode_poli" value="<?= e($edit['kode_poli'] ?? '') ?>" required maxlength="1"></div>
+    <div class="tombol-form">
+      <button class="tombol"><?= $edit ? 'Simpan perubahan' : '+ Tambah poli' ?></button>
+      <?php if ($edit): ?><a class="tombol garis" href="<?= url('admin/poli.php') ?>">Batal</a><?php endif; ?>
+    </div>
+  </form>
+
+
+  <div class="tabel-bungkus"><table>
+    <tr><th>Kode</th><th>Nama poli</th><th>Jumlah dokter</th><th></th></tr>
+    <?php foreach ($rows as $r): ?>
+    <tr>
+      <td><b><?= e($r['kode_poli']) ?></b></td>
+      <td><?= e($r['nama_poli']) ?></td>
+      <td><?= $r['jml_dokter'] ?></td>
+      <td class="aksi">
+        <a class="tombol kecil garis" href="<?= url('admin/poli.php?edit=' . $r['id_poli']) ?>">Ubah</a>
+        <form method="post" onsubmit="return confirm('Hapus poli ini?')">
+          <input type="hidden" name="hapus" value="<?= $r['id_poli'] ?>">
+          <button class="tombol kecil bahaya">Hapus</button>
+        </form>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+  </table></div>
+</main>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
