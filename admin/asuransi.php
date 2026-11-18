@@ -1,3 +1,34 @@
+<?php
+require_once __DIR__ . '/../includes/fungsi.php';
+wajib_role('admin');
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['hapus'])) {
+        db_jalankan('DELETE FROM asuransi WHERE id_asuransi = ?', [(int)$_POST['hapus']]);
+        set_pesan('sukses', 'Asuransi dihapus.');
+    } else {
+        $id   = (int)$_POST['id'];                         
+        $nama = trim($_POST['nama_asuransi']);
+
+        if ($nama === '') {
+            set_pesan('error', 'Nama asuransi wajib diisi.');
+        } else {
+            if ($id) db_jalankan('UPDATE asuransi SET nama_asuransi = ? WHERE id_asuransi = ?', [$nama, $id]);
+            else     db_jalankan('INSERT INTO asuransi (nama_asuransi) VALUES (?)', [$nama]);
+            set_pesan('sukses', 'Data asuransi disimpan.');
+        }
+    }
+    redirect('admin/asuransi.php');
+}
+
+
+$edit = isset($_GET['edit']) ? db_satu('SELECT * FROM asuransi WHERE id_asuransi = ?', [(int)$_GET['edit']]) : null;
+$rows = db_semua('SELECT * FROM asuransi ORDER BY nama_asuransi');
+
+$judul = 'Data Asuransi';
+require __DIR__ . '/../includes/header.php';
+?>
 <main class="isi">
   <div class="judul-halaman">
     <div><h1>Asuransi</h1><p class="redup">Daftar penjamin yang bisa dipilih pasien saat booking.</p></div>
