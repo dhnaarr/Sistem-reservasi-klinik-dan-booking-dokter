@@ -77,3 +77,51 @@ $rows = db_semua('SELECT d.*, p.nama_poli, u.email,
 $judul = 'Data Dokter';
 require __DIR__ . '/../includes/header.php';
 ?>
+<main class="isi">
+  <div class="judul-halaman">
+    <div><h1>Dokter</h1><p class="redup">Setiap dokter punya akun login sendiri untuk mengisi rekam medis.</p></div>
+  </div>
+
+  <form method="post" class="kartu">
+    <h3><?= $edit ? 'Ubah dokter' : 'Tambah dokter' ?></h3>
+    <input type="hidden" name="id" value="<?= $edit['id_dokter'] ?? 0 ?>">
+    <div class="dua-kolom">
+      <div><label>Poli</label>
+        <select name="id_poli" required>
+          <option value="">Pilih poli</option>
+          <?php foreach ($semua_poli as $p): ?>
+            <option value="<?= $p['id_poli'] ?>" <?= ($edit['id_poli'] ?? 0) == $p['id_poli'] ? 'selected' : '' ?>><?= e($p['nama_poli']) ?></option>
+          <?php endforeach; ?>
+        </select></div>
+      <div><label>Nama dokter (beserta gelar)</label><input name="nama_dokter" value="<?= e($edit['nama_dokter'] ?? '') ?>" required></div>
+      <div><label>Spesialis</label><input name="spesialis" value="<?= e($edit['spesialis'] ?? '') ?>" required></div>
+      <div><label>Email login</label><input type="email" name="email" value="<?= e($edit['email'] ?? '') ?>" required></div>
+      <div><label>Password login</label><input type="password" name="password" placeholder="<?= $edit ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter' ?>"></div>
+    </div>
+    <div class="tombol-form" style="margin-top:1rem">
+      <button class="tombol"><?= $edit ? 'Simpan perubahan' : '+ Tambah dokter' ?></button>
+      <?php if ($edit): ?><a class="tombol garis" href="<?= url('admin/dokter.php') ?>">Batal</a><?php endif; ?>
+    </div>
+  </form>
+
+  <div class="tabel-bungkus"><table>
+    <tr><th>Nama</th><th>Poli</th><th>Spesialis</th><th>Akun login</th><th>Jadwal</th><th></th></tr>
+    <?php foreach ($rows as $r): ?>
+    <tr>
+      <td><b><?= e($r['nama_dokter']) ?></b></td>
+      <td><?= e($r['nama_poli']) ?></td>
+      <td><?= e($r['spesialis']) ?></td>
+      <td><?= $r['email'] ? e($r['email']) : '<span class="pil abu">Belum ada</span>' ?></td>
+      <td><?= $r['jml_jadwal'] ?></td>
+      <td class="aksi">
+        <a class="tombol kecil garis" href="<?= url('admin/dokter.php?edit=' . $r['id_dokter']) ?>">Ubah</a>
+        <form method="post" onsubmit="return confirm('Hapus dokter ini? Semua jadwal dan bookingnya ikut terhapus.')">
+          <input type="hidden" name="hapus" value="<?= $r['id_dokter'] ?>">
+          <button class="tombol kecil bahaya">Hapus</button>
+        </form>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+  </table></div>
+</main>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
