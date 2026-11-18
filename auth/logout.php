@@ -1,6 +1,5 @@
 <?php
-session_start();
-session_unset();
-session_destroy();
-header("Location: login.php");
-exit;
+require_once __DIR__ . '/../includes/fungsi.php';
+
+session_destroy();  
+redirect('auth/login.php');
