@@ -1,74 +1,30 @@
 <?php
-require "../config/koneksi.php";
-require "../includes/auth.php";
+require_once __DIR__ . '/../includes/fungsi.php';
 
 
-if (isset($_SESSION['id_user'])) {
-    header("Location: " . dashboard_url($_SESSION['role']));
-    exit;
-}
+if (sudah_login()) redirect(halaman_awal($_SESSION['role']));
 
-$error = "";
-$email = trim($_POST['email'] ?? '');
+$error = '';
+$email = '';
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($email === '' || $password === '') {
-        $error = "Email dan password wajib diisi.";
-    } else {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+    $user = db_satu('SELECT * FROM users WHERE email = ?', [$email]);
 
-        if ($user && password_verify($password, $user['password'])) {
-            session_regenerate_id(true);
+    if ($user && $password === $user['password']) {
 
-            $_SESSION['id_user'] = $user['id_user'];
-            $_SESSION['nama']    = $user['nama'];
-            $_SESSION['role']    = $user['role'];
-
-          
-            if ($user['role'] === 'pasien') {
-                $q = $pdo->prepare("SELECT id_pasien FROM pasien WHERE id_user = ?");
-                $q->execute([$user['id_user']]);
-                $_SESSION['id_pasien'] = $q->fetchColumn();
-            } elseif ($user['role'] === 'dokter') {
-                $q = $pdo->prepare("SELECT id_dokter FROM dokter WHERE id_user = ?");
-                $q->execute([$user['id_user']]);
-                $_SESSION['id_dokter'] = $q->fetchColumn();
-            }
-
-            header("Location: " . dashboard_url($user['role']));
-            exit;
-        } else {
-       
-            $error = "Email atau password salah.";
-        }
+        $_SESSION['id_user'] = $user['id_user'];
+        $_SESSION['nama']    = $user['nama'];
+        $_SESSION['role']    = $user['role'];
+        redirect(halaman_awal($user['role']));
     }
+    $error = 'Email atau password salah.';
 }
+
+$judul = 'Masuk';
+$halaman_auth = true;
+require __DIR__ . '/../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-</head>
-<body>
-    <h2>Login</h2>
-
-    <?php if ($error): ?>
-        <p style="color:red;"><?= htmlspecialchars($error) ?></p>
-    <?php endif; ?>
-
-    <form method="POST">
-        <p>Email<br>
-           <input type="email" name="email" value="<?= htmlspecialchars($email) ?>"></p>
-        <p>Password<br>
-           <input type="password" name="password"></p>
-        <button type="submit">Login</button>
-    </form>
-
-    <p>Belum punya akun? <a href="register.php">Daftar</a></p>
-</body>
-</html>
