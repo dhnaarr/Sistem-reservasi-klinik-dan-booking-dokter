@@ -82,3 +82,75 @@ $f = $edit ?: ['id_jadwal' => 0, 'id_dokter' => 0, 'tanggal' => '', 'sesi' => 'p
 $judul = 'Jadwal Praktik';
 require __DIR__ . '/../includes/header.php';
 ?>
+<main class="isi">
+  <div class="judul-halaman">
+    <div><h1>Jadwal praktik</h1><p class="redup">Atur tanggal, sesi, kuota, dan status cuti dokter.</p></div>
+  </div>
+
+  <form method="post" class="kartu">
+    <h3><?= $edit ? 'Ubah jadwal' : 'Tambah jadwal' ?></h3>
+    <input type="hidden" name="id" value="<?= $f['id_jadwal'] ?>">
+    <div class="dua-kolom">
+      <div><label>Dokter</label>
+        <select name="id_dokter" required>
+          <option value="">Pilih dokter</option>
+          <?php foreach ($semua_dokter as $d): ?>
+            <option value="<?= $d['id_dokter'] ?>" <?= $f['id_dokter'] == $d['id_dokter'] ? 'selected' : '' ?>><?= e($d['nama_dokter']) ?> (<?= e($d['nama_poli']) ?>)</option>
+          <?php endforeach; ?>
+        </select></div>
+      <div><label>Tanggal</label><input type="date" name="tanggal" value="<?= e($f['tanggal']) ?>" required></div>
+      <div><label>Sesi</label>
+        <select name="sesi">
+          <?php foreach (['pagi', 'siang', 'sore'] as $s): ?>
+            <option value="<?= $s ?>" <?= $f['sesi'] === $s ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
+          <?php endforeach; ?>
+        </select></div>
+      <div><label>Status</label>
+        <select name="status">
+          <option value="aktif" <?= $f['status'] === 'aktif' ? 'selected' : '' ?>>Aktif</option>
+          <option value="cuti" <?= $f['status'] === 'cuti' ? 'selected' : '' ?>>Cuti</option>
+        </select></div>
+      <div><label>Jam mulai</label><input type="time" name="jam_mulai" value="<?= e(jam($f['jam_mulai'])) ?>" required></div>
+      <div><label>Jam selesai</label><input type="time" name="jam_selesai" value="<?= e(jam($f['jam_selesai'])) ?>" required></div>
+      <div><label>Kuota</label><input type="number" name="kuota" value="<?= (int)$f['kuota'] ?>" min="1" max="200" required></div>
+      <div><label>Catatan (opsional)</label><input name="catatan" value="<?= e($f['catatan']) ?>" maxlength="100" placeholder="Contoh: Dokter sedang cuti"></div>
+    </div>
+    <div class="tombol-form" style="margin-top:1rem">
+      <button class="tombol"><?= $edit ? 'Simpan perubahan' : '+ Tambah jadwal' ?></button>
+      <?php if ($edit): ?><a class="tombol garis" href="<?= url('admin/jadwal.php') ?>">Batal</a><?php endif; ?>
+    </div>
+  </form>
+
+  <h2 class="sub-judul">Daftar jadwal</h2>
+  <form method="get" class="baris-cari">
+    <select name="dokter">
+      <option value="0">Semua dokter</option>
+      <?php foreach ($semua_dokter as $d): ?>
+        <option value="<?= $d['id_dokter'] ?>" <?= $filter == $d['id_dokter'] ? 'selected' : '' ?>><?= e($d['nama_dokter']) ?></option>
+      <?php endforeach; ?>
+    </select>
+    <button class="tombol">Tampilkan</button>
+  </form>
+
+  <div class="tabel-bungkus"><table>
+    <tr><th>Tanggal</th><th>Dokter</th><th>Sesi / jam</th><th>Terisi</th><th>Status</th><th></th></tr>
+    <?php if (!$rows): ?><tr><td colspan="6" class="kosong">Belum ada jadwal.</td></tr><?php endif; ?>
+    <?php foreach ($rows as $r): ?>
+    <tr>
+      <td><?= e(tgl_indo($r['tanggal'])) ?></td>
+      <td><b><?= e($r['nama_dokter']) ?></b><br><small class="redup"><?= e($r['nama_poli']) ?></small></td>
+      <td><?= ucfirst($r['sesi']) ?><br><small class="redup"><?= jam($r['jam_mulai']) ?> - <?= jam($r['jam_selesai']) ?></small></td>
+      <td><?= $r['terisi'] ?> / <?= $r['kuota'] ?></td>
+      <td><?= $r['status'] === 'cuti' ? '<span class="pil kuning">Cuti</span>' : '<span class="pil hijau">Aktif</span>' ?></td>
+      <td class="aksi">
+        <a class="tombol kecil garis" href="<?= url('admin/jadwal.php?edit=' . $r['id_jadwal']) ?>">Ubah</a>
+        <form method="post" onsubmit="return confirm('Hapus jadwal ini?')">
+          <input type="hidden" name="hapus" value="<?= $r['id_jadwal'] ?>">
+          <button class="tombol kecil bahaya">Hapus</button>
+        </form>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+  </table></div>
+</main>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
