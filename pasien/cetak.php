@@ -25,3 +25,34 @@ $penjamin = ['umum' => 'Umum', 'bpjs' => 'BPJS Kesehatan', 'asuransi' => 'Asuran
 $judul = 'Bukti Booking';
 require __DIR__ . '/../includes/header.php';
 ?>
+<main class="isi sempit">
+  <div class="struk">
+    <h2>🏥 Klinik Sehat Bersama</h2>
+    <p class="redup">Bukti pendaftaran booking</p>
+
+    <div class="struk-nomor">
+      <small>Nomor antrian</small>
+      <strong><?= e(kode_antrian($r['kode_poli'], $r['no_antrian'])) ?></strong>
+      <span>Kode booking: <?= kode_booking($r['id_pendaftaran']) ?></span>
+    </div>
+
+    <dl class="rincian">
+      <dt>Nama pasien</dt><dd><?= e($_SESSION['nama']) ?></dd>
+      <dt>NIK</dt><dd><?= e($pasien['nik']) ?></dd>
+      <dt>Poli</dt><dd><?= e($r['nama_poli']) ?></dd>
+      <dt>Dokter</dt><dd><?= e($r['nama_dokter']) ?> (<?= e($r['spesialis']) ?>)</dd>
+      <dt>Tanggal</dt><dd><?= e(tgl_indo($r['tanggal'])) ?></dd>
+      <dt>Jam</dt><dd><?= jam($r['jam_mulai']) ?> - <?= jam($r['jam_selesai']) ?></dd>
+      <dt>Penjamin</dt><dd><?= e($penjamin) ?></dd>
+      <dt>Status</dt><dd><?= $status_teks ?></dd>
+    </dl>
+    <p class="catatan">Tunjukkan bukti ini di loket pendaftaran 15 menit sebelum jam praktik dimulai.</p>
+  </div>
+
+  <p class="tengah tanpa-cetak" style="margin-top:1.2rem">
+    <button class="tombol" onclick="window.print()">🖨️ Cetak / simpan PDF</button>
+    <a class="tombol garis" href="<?= url('pasien/riwayat.php') ?>">Kembali</a>
+  </p>
+</main>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
+
