@@ -1,147 +1,82 @@
 <?php
-require "../config/koneksi.php";
+require_once __DIR__ . '/../includes/fungsi.php';
+if (sudah_login()) redirect(halaman_awal($_SESSION['role']));
 
-$error = "";
-$sukses = "";
+$errors = [];
 
-
-$nama          = trim($_POST['nama'] ?? '');
-$email         = trim($_POST['email'] ?? '');
-$password      = $_POST['password'] ?? '';
-$konfirmasi    = $_POST['konfirmasi'] ?? '';
-$nik           = trim($_POST['nik'] ?? '');
-$tgl_lahir     = $_POST['tgl_lahir'] ?? '';
-$jenis_kelamin = $_POST['jenis_kelamin'] ?? '';
-$no_hp         = trim($_POST['no_hp'] ?? '');
-$alamat        = trim($_POST['alamat'] ?? '');
-$no_bpjs       = trim($_POST['no_bpjs'] ?? '');
+$in = ['nama' => '', 'email' => '', 'nik' => '', 'tgl_lahir' => '', 'jenis_kelamin' => '', 'no_hp' => '', 'alamat' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    foreach ($in as $k => $v) $in[$k] = trim($_POST[$k] ?? '');
+    $password = $_POST['password'] ?? '';
+    $ulangi   = $_POST['ulangi'] ?? '';
 
-  
-    if ($nama === '' || $email === '' || $password === '' || $nik === '' || $tgl_lahir === '' || $jenis_kelamin === '') {
-        $error = "Semua kolom bertanda * wajib diisi.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Format email tidak valid.";
-    } elseif (strlen($password) < 6) {
-        $error = "Password minimal 6 karakter.";
-    } elseif ($password !== $konfirmasi) {
-        $error = "Konfirmasi password tidak sama.";
-    } elseif (!preg_match('/^\d{16}$/', $nik)) {
-        $error = "NIK harus 16 digit angka.";
-    } elseif (!in_array($jenis_kelamin, ['L', 'P'])) {
-        $error = "Jenis kelamin tidak valid.";
-    } else {
+    // ---- Validasi ----
+    if (strlen($in['nama']) < 3)                           $errors[] = 'Nama minimal 3 karakter.';
+    if (!filter_var($in['email'], FILTER_VALIDATE_EMAIL))  $errors[] = 'Format email tidak valid.';
+    if (!preg_match('/^[0-9]{16}$/', $in['nik']))          $errors[] = 'NIK harus 16 digit angka.';
+    if ($in['tgl_lahir'] === '')                           $errors[] = 'Tanggal lahir wajib diisi.';
+    if (!in_array($in['jenis_kelamin'], ['L', 'P']))       $errors[] = 'Pilih jenis kelamin.';
+    if (!preg_match('/^[0-9+]{9,15}$/', $in['no_hp']))     $errors[] = 'No. HP harus 9-15 digit.';
+    if (strlen($password) < 6)                             $errors[] = 'Password minimal 6 karakter.';
+    if ($password !== $ulangi)                             $errors[] = 'Ulangi password tidak sama.';
 
-      
-        $cekEmail = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
-        $cekEmail->execute([$email]);
-
-        $cekNik = $pdo->prepare("SELECT COUNT(*) FROM pasien WHERE nik = ?");
-        $cekNik->execute([$nik]);
-
-        if ($cekEmail->fetchColumn() > 0) {
-            $error = "Email sudah terdaftar.";
-        } elseif ($cekNik->fetchColumn() > 0) {
-            $error = "NIK sudah terdaftar.";
-        } else {
+ 
+    if (!$errors) {
+        if (db_satu('SELECT 1 FROM users WHERE email = ?', [$in['email']])) $errors[] = 'Email sudah terdaftar.';
+        if (db_satu('SELECT 1 FROM pasien WHERE nik = ?', [$in['nik']]))    $errors[] = 'NIK sudah terdaftar.';
+    }
 
 
-            try {
-                $pdo->beginTransaction();
+    if (!$errors) {
+        db_jalankan("INSERT INTO users (nama, email, password, role) VALUES (?, ?, ?, 'pasien')",
+            [$in['nama'], $in['email'], $password]);
+        $id_user = $pdo->lastInsertId();
 
-                $hash = password_hash($password, PASSWORD_DEFAULT);
+        db_jalankan('INSERT INTO pasien (id_user, nik, tgl_lahir, jenis_kelamin, no_hp, alamat) VALUES (?, ?, ?, ?, ?, ?)',
+            [$id_user, $in['nik'], $in['tgl_lahir'], $in['jenis_kelamin'], $in['no_hp'], $in['alamat']]);
 
-                $stmt = $pdo->prepare(
-                    "INSERT INTO users (nama, email, password, role) VALUES (?, ?, ?, 'pasien')"
-                );
-                $stmt->execute([$nama, $email, $hash]);
-                $id_user = $pdo->lastInsertId();
-
-                $stmt = $pdo->prepare(
-                    "INSERT INTO pasien (id_user, nik, tgl_lahir, jenis_kelamin, no_hp, alamat, no_bpjs)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)"
-                );
-                $stmt->execute([
-                    $id_user,
-                    $nik,
-                    $tgl_lahir,
-                    $jenis_kelamin,
-                    $no_hp !== '' ? $no_hp : null,
-                    $alamat !== '' ? $alamat : null,
-                    $no_bpjs !== '' ? $no_bpjs : null
-                ]);
-
-                $pdo->commit();
-                $sukses = "Registrasi berhasil. Silakan login.";
-
-
-                $nama = $email = $nik = $tgl_lahir = $jenis_kelamin = $no_hp = $alamat = $no_bpjs = '';
-
-            } catch (PDOException $e) {
-                $pdo->rollBack();
-                $error = "Terjadi kesalahan saat menyimpan data.";
-            }
-        }
+        set_pesan('sukses', 'Pendaftaran berhasil. Silakan masuk.');
+        redirect('auth/login.php');
     }
 }
+
+$judul = 'Daftar';
+$halaman_auth = true;
+require __DIR__ . '/../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Registrasi Pasien</title>
-</head>
-<body>
-    <h2>Registrasi Pasien</h2>
+<main class="auth-wrap satu">
+  <section class="auth-kartu">
+    <h2>Buat akun pasien</h2>
+    <p class="redup">Data diri dipakai untuk pendaftaran berobat.</p>
 
-    <?php if ($error): ?>
-        <p style="color:red;"><?= htmlspecialchars($error) ?></p>
+    <?php if ($errors): ?>
+      <div class="alert error"><ul><?php foreach ($errors as $m): ?><li><?= e($m) ?></li><?php endforeach; ?></ul></div>
     <?php endif; ?>
 
-    <?php if ($sukses): ?>
-        <p style="color:green;"><?= htmlspecialchars($sukses) ?>
-           <a href="login.php">Ke halaman login</a></p>
-    <?php endif; ?>
-
-    <form method="POST">
-        <p>Nama lengkap *<br>
-           <input type="text" name="nama" value="<?= htmlspecialchars($nama) ?>"></p>
-
-        <p>Email *<br>
-           <input type="email" name="email" value="<?= htmlspecialchars($email) ?>"></p>
-
-        <p>Password * (min. 6 karakter)<br>
-           <input type="password" name="password"></p>
-
-        <p>Konfirmasi password *<br>
-           <input type="password" name="konfirmasi"></p>
-
-        <p>NIK * (16 digit)<br>
-           <input type="text" name="nik" maxlength="16" value="<?= htmlspecialchars($nik) ?>"></p>
-
-        <p>Tanggal lahir *<br>
-           <input type="date" name="tgl_lahir" value="<?= htmlspecialchars($tgl_lahir) ?>"></p>
-
-        <p>Jenis kelamin *<br>
-           <select name="jenis_kelamin">
-               <option value="">-- pilih --</option>
-               <option value="L" <?= $jenis_kelamin === 'L' ? 'selected' : '' ?>>Laki-laki</option>
-               <option value="P" <?= $jenis_kelamin === 'P' ? 'selected' : '' ?>>Perempuan</option>
-           </select></p>
-
-        <p>No. HP<br>
-           <input type="text" name="no_hp" value="<?= htmlspecialchars($no_hp) ?>"></p>
-
-        <p>Alamat<br>
-           <textarea name="alamat"><?= htmlspecialchars($alamat) ?></textarea></p>
-
-        <p>No. BPJS (jika ada)<br>
-           <input type="text" name="no_bpjs" value="<?= htmlspecialchars($no_bpjs) ?>"></p>
-
-        <button type="submit">Daftar</button>
+    <form method="post">
+      <div class="dua-kolom">
+        <div><label>Nama lengkap</label><input name="nama" value="<?= e($in['nama']) ?>" required></div>
+        <div><label>Email</label><input type="email" name="email" value="<?= e($in['email']) ?>" required></div>
+        <div><label>NIK (16 digit)</label><input name="nik" value="<?= e($in['nik']) ?>" maxlength="16" required></div>
+        <div><label>No. HP</label><input name="no_hp" value="<?= e($in['no_hp']) ?>" required></div>
+        <div><label>Tanggal lahir</label><input type="date" name="tgl_lahir" value="<?= e($in['tgl_lahir']) ?>" max="<?= date('Y-m-d') ?>" required></div>
+        <div><label>Jenis kelamin</label>
+          <select name="jenis_kelamin" required>
+            <option value="">Pilih</option>
+            <option value="L" <?= $in['jenis_kelamin'] === 'L' ? 'selected' : '' ?>>Laki-laki</option>
+            <option value="P" <?= $in['jenis_kelamin'] === 'P' ? 'selected' : '' ?>>Perempuan</option>
+          </select></div>
+      </div>
+      <label>Alamat</label>
+      <textarea name="alamat" rows="2"><?= e($in['alamat']) ?></textarea>
+      <div class="dua-kolom">
+        <div><label>Password</label><input type="password" name="password" required></div>
+        <div><label>Ulangi password</label><input type="password" name="ulangi" required></div>
+      </div>
+      <button class="tombol penuh" style="margin-top:1.2rem">Daftar</button>
     </form>
-
-    <p>Sudah punya akun? <a href="login.php">Login</a></p>
-</body>
-</html>
+    <p class="redup tengah">Sudah punya akun? <a href="<?= url('auth/login.php') ?>">Masuk</a></p>
+  </section>
+</main>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
